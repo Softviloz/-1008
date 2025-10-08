@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>五子棋遊戲</title>
+<style>
+  body {
+    text-align: center;
+    font-family: sans-serif;
+  }
+  canvas {
+    border: 1px solid #333;
+    background-color: #f4eec7;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+  <h2>五子棋遊戲（雙人對戰）</h2>
+  <canvas id="board" width="450" height="450"></canvas>
+  <p id="status">輪到黑子</p>
+
+<script>
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const size = 15;
+const cell = canvas.width / size;
+let board = Array.from({length: size}, () => Array(size).fill(0));
+let current = 1; // 1黑 2白
+let gameOver = false;
+
+function drawBoard(){
+  for(let i=0;i<size;i++){
+    ctx.beginPath();
+    ctx.moveTo(i*cell + cell/2, cell/2);
+    ctx.lineTo(i*cell + cell/2, canvas.height - cell/2);
+    ctx.moveTo(cell/2, i*cell + cell/2);
+    ctx.lineTo(canvas.width - cell/2, i*cell + cell/2);
+    ctx.stroke();
+  }
+}
+drawBoard();
+
+canvas.addEventListener('click', (e)=>{
+  if(gameOver) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const col = Math.floor(x / cell);
+  const row = Math.floor(y / cell);
+  if(board[row][col] !== 0) return;
+
+  board[row][col] = current;
+  drawPiece(col, row, current);
+  if(checkWin(row, col)){
+    document.getElementById('status').textContent = (current==1?"黑子":"白子") + "勝利！";
+    gameOver = true;
+  } else {
+    current = 3 - current;
+    document.getElementById('status').textContent = "輪到" + (current==1?"黑子":"白子");
+  }
+});
+
+function drawPiece(x, y, player){
+  ctx.beginPath();
+  ctx.arc(x*cell+cell/2, y*cell+cell/2, cell/2-2, 0, 2*Math.PI);
+  ctx.fillStyle = player===1 ? 'black' : 'white';
+  ctx.fill();
+  ctx.stroke();
+}
+
+function checkWin(r, c){
+  const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+  for(let [dx,dy] of dirs){
+    let count=1;
+    count += countDir(r,c,dx,dy);
+    count += countDir(r,c,-dx,-dy);
+    if(count>=5) return true;
+  }
+  return false;
+}
+function countDir(r,c,dx,dy){
+  let cnt=0;
+  while(true){
+    r+=dy; c+=dx;
+    if(r<0||r>=size||c<0||c>=size) break;
+    if(board[r][c]===current) cnt++; else break;
+  }
+  return cnt;
+}
+</script>
+</body>
+</html>
